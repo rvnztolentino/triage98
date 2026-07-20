@@ -1,0 +1,48 @@
+# Stateful services for Triage98. The API and SPA run on the host via `npm run dev`;
+# this file brings up only Postgres and Redis, matching the tech stack in vision.md.
+#
+#   docker compose up -d        start Postgres + Redis
+#   docker compose down         stop them (data is kept)
+#   docker compose down -v      stop and wipe data (re-runs db/init on next boot)
+#
+# The SQL in db/init/ is applied automatically on the FIRST boot of a fresh volume.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: triage98-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-triage98}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-triage98}
+      POSTGRES_DB: ${POSTGRES_DB:-triage98}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - triage98-postgres-data:/var/lib/postgresql/data
+      # Applied in filename order on first boot of an empty data volume.
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-triage98} -d ${POSTGRES_DB:-triage98}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: triage98-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - triage98-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  triage98-postgres-data:
+  triage98-redis-data:

@@ -1,0 +1,112 @@
+/* Layout on top of 98.css. Retro styling, modern usability: the window survives a
+   narrow viewport, focus stays visible, and hit targets stay comfortable. */
+
+:root {
+  --desktop-teal: #008080;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--desktop-teal);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.desktop {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.app-window {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-body {
+  padding: 12px;
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home fieldset {
+  margin: 0;
+}
+
+.home p {
+  margin: 6px 0;
+  line-height: 1.4;
+}
+
+.home__muted {
+  color: #4d4d4d;
+}
+
+.home__actions {
+  margin-top: 10px;
+}
+
+.status-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.status-table td {
+  padding: 4px 8px;
+  vertical-align: middle;
+}
+
+.status-table td:first-child {
+  width: 40%;
+  font-weight: bold;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  border: 1px solid #3f3f3f;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.status-dot--up {
+  background: #00a800;
+}
+
+.status-dot--down {
+  background: #c00000;
+}
+
+/* Keep keyboard focus obvious even against the beveled chrome. */
+:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 1px;
+}
+
+@media (max-width: 480px) {
+  .desktop {
+    padding: 8px;
+  }
+
+  .status-table td:first-child {
+    width: 50%;
+  }
+}
