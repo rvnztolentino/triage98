@@ -3,6 +3,7 @@ import { redis } from '../redis/client.js';
 import { logger } from '../lib/logger.js';
 import { withTimeout } from '../lib/timeout.js';
 import { TooManyRequestsError } from '../lib/errors.js';
+import { routeParam } from '../lib/params.js';
 
 // Redis-backed fixed-window rate limiter. A single INCR (plus a first-hit EXPIRE)
 // per request keeps it cheap. It deliberately FAILS OPEN: if Redis is unreachable the
@@ -89,4 +90,19 @@ export function rateLimit(options: RateLimitOptions) {
 /** Bucket key from the caller's IP; used for pre-auth endpoints (login/register). */
 export function ipKey(req: Request): string {
   return req.ip ?? 'unknown';
+}
+
+/** Bucket key from the authenticated user; used for post-auth mutations. */
+export function userKey(req: Request): string {
+  return req.user?.id ?? ipKey(req);
+}
+
+/**
+ * Bucket key scoped to one user in one workspace — the shape admin mutations use, so
+ * a burst of edits in one workspace never throttles the same person's work elsewhere.
+ * Falls back to the user alone before requireWorkspace has resolved the slug.
+ */
+export function userWorkspaceKey(req: Request): string {
+  const workspace = req.workspace?.id ?? routeParam(req, 'slug') ?? 'none';
+  return `${userKey(req)}:${workspace}`;
 }

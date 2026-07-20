@@ -1,20 +1,90 @@
 {
   "info": {
     "name": "Triage98 API",
-    "description": "Complete API collection for Triage98 (local-first operations triage).\n\nCovers the currently implemented surface: meta/health and auth (register, login, me), plus negative tests.\n\nUsage:\n1. Import this collection AND `triage98.postman_environment.json`, then select the \"Triage98 (local)\" environment (top-right).\n2. Start the API: `npm run dev:server` (defaults to http://localhost:4000).\n3. Run \"Auth / Register\" — it generates a unique email, creates the account, and saves the JWT into the `token` variable.\n4. Everything else (Login, Me) reuses that token automatically. Or use the Collection Runner to run the whole thing top to bottom.\n\nAuth: the collection sends `Authorization: Bearer {{token}}` by default; requests that must be anonymous override this to \"No Auth\".",
+    "description": "Complete API collection for Triage98 (local-first operations triage).\n\nCovers the currently implemented surface: meta/health, auth (register, login, me), and workspaces (create, list, detail, delete, invites, members, departments), plus negative tests for every access-control rule.\n\nUsage:\n1. Import this collection AND `triage98.postman_environment.json`, then select the \"Triage98 (local)\" environment (top-right).\n2. Start the API: `npm run dev:server` (defaults to http://localhost:4000).\n3. Run the whole collection top to bottom with the Collection Runner. The requests are ordered as a story: an owner registers, creates a workspace, mints an invite; a second user registers, joins, and leaves; the owner then deletes the workspace.\n\nAuth: the collection sends `Authorization: Bearer {{token}}` (the owner) by default. Requests acting as the second user override this to `{{memberToken}}`; anonymous requests override to \"No Auth\".",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
     "type": "bearer",
-    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:4000", "type": "string" },
-    { "key": "email", "value": "", "type": "string" },
-    { "key": "password", "value": "correcthorse", "type": "string" },
-    { "key": "displayName", "value": "Demo User", "type": "string" },
-    { "key": "token", "value": "", "type": "string" },
-    { "key": "userId", "value": "", "type": "string" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "email",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "correcthorse",
+      "type": "string"
+    },
+    {
+      "key": "displayName",
+      "value": "Demo User",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "workspaceSlug",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "workspaceName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "inviteCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "inviteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "memberEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "memberToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "memberUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "departmentId",
+      "value": "",
+      "type": "string"
+    }
   ],
   "item": [
     {
@@ -25,7 +95,15 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/", "host": ["{{baseUrl}}"], "path": [""] },
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            },
             "description": "Service banner. Returns { name, status }."
           },
           "event": [
@@ -47,7 +125,15 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] },
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
             "description": "Liveness + dependency probe. 200 with status 'ok' when Postgres and Redis are up; 503 'degraded' when a dependency is down (never hangs)."
           },
           "event": [
@@ -106,12 +192,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"displayName\": \"{{displayName}}\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
             "description": "Create an account. Returns { token, user }. Rate-limited to 5/hour/IP."
           }
         },
@@ -134,12 +234,26 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
             "description": "Verify credentials, return a new session token. Uses the email captured by Register. Rate-limited to 10/min/IP."
           }
         },
@@ -161,12 +275,21 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] },
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
             "description": "Current user from the Bearer token (inherited from the collection)."
           }
         },
         {
-          "name": "Login (wrong password) → 401",
+          "name": "Login (wrong password) \u2192 401",
           "event": [
             {
               "listen": "test",
@@ -182,22 +305,47 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"definitely-wrong\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
             "description": "Wrong password returns the same generic 401 as an unknown email (no user enumeration)."
           }
         },
         {
-          "name": "Me (no token) → 401",
+          "name": "Me (no token) \u2192 401",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] },
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
             "description": "Without a Bearer token the endpoint returns 401."
           },
           "event": [
@@ -215,16 +363,32 @@
           ]
         },
         {
-          "name": "Register (validation) → 400",
+          "name": "Register (validation) \u2192 400",
           "request": {
-            "auth": { "type": "noauth" },
+            "auth": {
+              "type": "noauth"
+            },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"123\",\n  \"displayName\": \"x\"\n}"
             },
-            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
             "description": "Invalid body returns 400 with per-field messages under error.details."
           },
           "event": [
@@ -243,6 +407,1144 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Workspaces",
+      "description": "Workspaces, invites, members, and departments. Ordered as a runnable story \u2014 run top to bottom.",
+      "item": [
+        {
+          "name": "Create workspace",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Unique name per run so the slug never collides with a previous run.",
+                  "pm.collectionVariables.set('workspaceName', `Ops Team ${Date.now()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const w = pm.response.json().workspace;",
+                  "pm.test('caller becomes the owner', () => pm.expect(w.role).to.eql('owner'));",
+                  "pm.test('slug is derived from the name', () => pm.expect(w.slug).to.match(/^[a-z0-9]+(-[a-z0-9]+)*$/));",
+                  "pm.collectionVariables.set('workspaceSlug', w.slug);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces"
+              ]
+            },
+            "description": "Create a workspace and become its owner. Seeds the six default departments. Capped at 3 owned workspaces per user; throttled 5/hour/user.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{workspaceName}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "List my workspaces",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const { workspaces } = pm.response.json();",
+                  "pm.test('includes the new workspace', () => pm.expect(workspaces.map((w) => w.slug)).to.include(pm.collectionVariables.get('workspaceSlug')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces"
+              ]
+            },
+            "description": "Every workspace the caller belongs to, with their role in each."
+          }
+        },
+        {
+          "name": "Get workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('returns the workspace and the caller role', () => {",
+                  "  pm.expect(body.workspace.slug).to.eql(pm.collectionVariables.get('workspaceSlug'));",
+                  "  pm.expect(body.role).to.eql('owner');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}"
+              ]
+            },
+            "description": "Workspace detail plus the caller's own role. Requires membership."
+          }
+        },
+        {
+          "name": "List departments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const { departments } = pm.response.json();",
+                  "pm.test('six defaults are seeded', () => pm.expect(departments).to.have.lengthOf(6));",
+                  "pm.test('defaults are flagged', () => pm.expect(departments.every((d) => d.isDefault)).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/departments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "departments"
+              ]
+            },
+            "description": "Departments in the workspace. Any member may read these \u2014 requesters need them to file."
+          }
+        },
+        {
+          "name": "Create department",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('departmentId', `grounds-${Date.now()}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const { department } = pm.response.json();",
+                  "pm.test('is not flagged as a default', () => pm.expect(department.isDefault).to.be.false);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/departments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "departments"
+              ]
+            },
+            "description": "Add a routing target. Admin or owner only. Capped at 10 custom departments.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{departmentId}}\",\n  \"name\": \"Grounds\",\n  \"description\": \"Landscaping and outdoor areas.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('name is updated', () => pm.expect(pm.response.json().department.name).to.eql('Grounds & Landscaping'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/departments/{{departmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "departments",
+                "{{departmentId}}"
+              ]
+            },
+            "description": "Rename or re-describe a department. At least one field is required.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Grounds & Landscaping\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Update department (empty body) -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('explains what is missing', () => pm.expect(pm.response.json().error.message).to.include('Provide a name or a description'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/departments/{{departmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "departments",
+                "{{departmentId}}"
+              ]
+            },
+            "description": "A PATCH with nothing to change is a client bug, not a silent no-op.",
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          }
+        },
+        {
+          "name": "Delete default department -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));",
+                  "pm.test('explains the rule', () => pm.expect(pm.response.json().error.message).to.include('Default departments'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/departments/it",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "departments",
+                "it"
+              ]
+            },
+            "description": "The six built-in departments cannot be deleted \u2014 triage always needs somewhere to route to."
+          }
+        },
+        {
+          "name": "Delete department",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/departments/{{departmentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "departments",
+                "{{departmentId}}"
+              ]
+            },
+            "description": "Delete a custom department. Rejected with 409 if tickets still reference it."
+          }
+        },
+        {
+          "name": "Create invite",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const { invite } = pm.response.json();",
+                  "pm.test('returns a readable code', () => pm.expect(invite.code).to.match(/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/));",
+                  "pm.test('is a reusable requester invite', () => {",
+                  "  pm.expect(invite.role).to.eql('requester');",
+                  "  pm.expect(invite.isReusable).to.be.true;",
+                  "});",
+                  "pm.collectionVariables.set('inviteCode', invite.code);",
+                  "pm.collectionVariables.set('inviteId', invite.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/invites",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "invites"
+              ]
+            },
+            "description": "Mint an invite code. Admin or owner; only an owner may invite an admin. Set expiresInDays to 0 for a code that never expires. Capped at 5 active invites.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"requester\",\n  \"isReusable\": true,\n  \"expiresInDays\": 7\n}"
+            }
+          }
+        },
+        {
+          "name": "List invites",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('includes the new invite', () => pm.expect(pm.response.json().invites.map((i) => i.id)).to.include(pm.collectionVariables.get('inviteId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/invites",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "invites"
+              ]
+            },
+            "description": "Admin or owner only \u2014 requesters have no business seeing invite codes."
+          }
+        },
+        {
+          "name": "Register second user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('memberEmail', `member+${Date.now()}@triage98.local`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('memberToken', body.token);",
+                  "pm.collectionVariables.set('memberUserId', body.user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "A second account, so the invite and member rules can be exercised for real. Register is throttled 5/hour/IP \u2014 if this 429s, wait or restart Redis.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"password\": \"{{password}}\",\n  \"displayName\": \"Casey Member\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Join workspace with invite",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.test('joins at the invite role', () => pm.expect(body.role).to.eql('requester'));",
+                  "pm.test('is a new membership', () => pm.expect(body.alreadyMember).to.be.false);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/join",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "join"
+              ]
+            },
+            "description": "Redeem an invite code as the second user. Accepts a bare code or a pasted invite link (\u2026/join?code=\u2026). Single-use codes are burned here; this one is reusable.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{inviteCode}}\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Join again (already a member) -> 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('reports the existing membership', () => pm.expect(pm.response.json().alreadyMember).to.be.true);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/join",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "join"
+              ]
+            },
+            "description": "Redeeming a code for a workspace you already belong to is a no-op that does not consume the invite.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{inviteCode}}\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List members",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "const { members } = pm.response.json();",
+                  "pm.test('owner and the new member are both listed', () => pm.expect(members).to.have.lengthOf(2));",
+                  "pm.test('roles are correct', () => {",
+                  "  pm.expect(members[0].role).to.eql('owner');",
+                  "  pm.expect(members[1].userId).to.eql(pm.collectionVariables.get('memberUserId'));",
+                  "  pm.expect(members[1].role).to.eql('requester');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "members"
+              ]
+            },
+            "description": "Any member may see who else is in the workspace."
+          }
+        },
+        {
+          "name": "Promote member to admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('role is now admin', () => pm.expect(pm.response.json().member.role).to.eql('admin'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/members/{{memberUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "members",
+                "{{memberUserId}}"
+              ]
+            },
+            "description": "Owner-only. An admin cannot change roles, and nobody can change their own.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Member promotes themselves -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));",
+                  "pm.test('self-service promotion is refused', () => pm.expect(pm.response.json().error.code).to.eql('forbidden'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/members/{{memberUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "members",
+                "{{memberUserId}}"
+              ]
+            },
+            "description": "Now an admin, the second user still cannot change roles \u2014 theirs or anyone else's.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Member leaves workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/leave",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "leave"
+              ]
+            },
+            "description": "Give up your own membership. Owners cannot leave \u2014 they delete the workspace instead.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Former member reads workspace -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('existence is not leaked', () => pm.expect(pm.response.json().error.code).to.eql('not_found'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}"
+              ]
+            },
+            "description": "A non-member gets the same 404 as a nonexistent slug, so slugs cannot be probed for existence.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Owner leaves -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));",
+                  "pm.test('explains the rule', () => pm.expect(pm.response.json().error.message).to.include('owners cannot leave'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/leave",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "leave"
+              ]
+            },
+            "description": "Letting the owner walk out would strand the workspace with nobody able to administer it."
+          }
+        },
+        {
+          "name": "Revoke invite",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('invite is revoked', () => pm.expect(pm.response.json().invite.revokedAt).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}/invites/{{inviteId}}/revoke",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}",
+                "invites",
+                "{{inviteId}}",
+                "revoke"
+              ]
+            },
+            "description": "Kill a code while keeping the record. Owners may revoke any invite; admins only their own."
+          }
+        },
+        {
+          "name": "Join with revoked code -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));",
+                  "pm.test('generic message', () => pm.expect(pm.response.json().error.message).to.include('no longer valid'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/join",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "join"
+              ]
+            },
+            "description": "Unknown, expired, revoked, and already-used codes all return one message \u2014 an invite code is a bearer credential.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{inviteCode}}\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Join with malformed code -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('asks for a valid code', () => pm.expect(pm.response.json().error.message).to.include('valid invite code'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/join",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "join"
+              ]
+            },
+            "description": "Input that cannot be an invite code is rejected before any lookup.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"nope\"\n}"
+            },
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create workspace (no token) -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 401', () => pm.response.to.have.status(401));",
+                  "pm.test('code is unauthorized', () => pm.expect(pm.response.json().error.code).to.eql('unauthorized'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces"
+              ]
+            },
+            "description": "Every workspace route sits behind requireAuth.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Anonymous Team\"\n}"
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Unknown workspace -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/no-such-workspace",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "no-such-workspace"
+              ]
+            },
+            "description": "A slug nobody owns is indistinguishable from one you are not a member of."
+          }
+        },
+        {
+          "name": "Demo workspace is read-only -> 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 403 or 404', () => pm.expect(pm.response.code).to.be.oneOf([403, 404]));",
+                  "pm.test('403 means the read-only lock fired; 404 means you have not joined demo-clinic', () => pm.expect(pm.response.json().error.code).to.be.oneOf(['forbidden', 'not_found']));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/demo-clinic/departments",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "demo-clinic",
+                "departments"
+              ]
+            },
+            "description": "The seeded demo workspace accepts reads but rejects every mutation, whatever role you hold in it. Join it first with the code DEMO-CLINIC-2026 to see the 403 rather than a 404.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"nope\",\n  \"name\": \"Nope\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete workspace (wrong confirmation) -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('asks for the slug', () => pm.expect(pm.response.json().error.message).to.include(pm.collectionVariables.get('workspaceSlug')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}"
+              ]
+            },
+            "description": "Deleting cascades to every request, ticket, and note, so the caller retypes the slug.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirmation\": \"wrong\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/workspaces/{{workspaceSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "workspaces",
+                "{{workspaceSlug}}"
+              ]
+            },
+            "description": "Owner only, with the slug as confirmation. Cleans up everything this run created.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirmation\": \"{{workspaceSlug}}\"\n}"
+            }
+          }
         }
       ]
     }

@@ -93,24 +93,49 @@ function containsProfanity(value: string): boolean {
   });
 }
 
+export interface CleanNameOptions {
+  /** How the field is described in error messages, e.g. 'Workspace name'. */
+  label?: string;
+  minLength?: number;
+  maxLength?: number;
+}
+
 /**
- * Normalizes and validates a raw display name, returning the cleaned value. Throws
+ * Normalizes and validates a human-facing name, returning the cleaned value. Throws
  * BadRequestError with a specific reason when the name is empty, too short/long,
- * contains a link, or trips the profanity filter.
+ * contains a link, or trips the profanity filter. Used for anything other members
+ * see — display names and workspace names alike.
  */
-export function assertCleanDisplayName(raw: string): string {
+export function assertCleanName(
+  raw: string,
+  options: CleanNameOptions = {},
+): string {
+  const {
+    label = 'Name',
+    minLength = MIN_LENGTH,
+    maxLength = MAX_LENGTH,
+  } = options;
   const name = normalizeDisplayName(raw);
-  if (name.length < MIN_LENGTH) {
-    throw new BadRequestError(`Name must be at least ${MIN_LENGTH} characters.`);
+  if (name.length < minLength) {
+    throw new BadRequestError(
+      `${label} must be at least ${minLength} characters.`,
+    );
   }
-  if (name.length > MAX_LENGTH) {
-    throw new BadRequestError(`Name must be at most ${MAX_LENGTH} characters.`);
+  if (name.length > maxLength) {
+    throw new BadRequestError(
+      `${label} must be at most ${maxLength} characters.`,
+    );
   }
   if (/https?:\/\/|www\./i.test(name)) {
-    throw new BadRequestError('Name cannot contain a link.');
+    throw new BadRequestError(`${label} cannot contain a link.`);
   }
   if (containsProfanity(name)) {
-    throw new BadRequestError('Please choose a different name.');
+    throw new BadRequestError(`Please choose a different ${label.toLowerCase()}.`);
   }
   return name;
+}
+
+/** Cleans a user's display name. Thin wrapper over assertCleanName. */
+export function assertCleanDisplayName(raw: string): string {
+  return assertCleanName(raw);
 }

@@ -17,6 +17,31 @@ pool.on('error', (err) => {
   logger.error({ err }, 'Unexpected error on idle Postgres client');
 });
 
+/**
+ * Runs `fn` inside a transaction on a dedicated client, committing on success and
+ * rolling back on any thrown error. Multi-statement invariants (create-with-owner,
+ * cap checks that must not race a concurrent writer) go through this rather than
+ * issuing separate pool queries that could interleave.
+ */
+export async function withTransaction<T>(
+  fn: (client: pg.PoolClient) => Promise<T>,
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('begin');
+    const result = await fn(client);
+    await client.query('commit');
+    return result;
+  } catch (err) {
+    await client.query('rollback').catch((rollbackErr: unknown) => {
+      logger.error({ err: rollbackErr }, 'Transaction rollback failed');
+    });
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 /** Lightweight liveness probe used by the health endpoint; never blocks. */
 export async function pingDatabase(): Promise<boolean> {
   const query = pool

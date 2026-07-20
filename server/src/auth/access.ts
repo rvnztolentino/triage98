@@ -1,5 +1,5 @@
 import { pool } from '../db/pool.js';
-import { ForbiddenError } from '../lib/errors.js';
+import { ForbiddenError, NotFoundError } from '../lib/errors.js';
 import type { UserRole } from './types.js';
 
 // THE access-control choke point. Every query path that touches workspace-scoped data
@@ -107,4 +107,84 @@ export function requireWorkspaceOwner(
   userId: string,
 ): Promise<WorkspaceMembership> {
   return requireRole(workspaceId, userId, 'owner');
+}
+
+/** A workspace resolved by slug together with the caller's membership in it. */
+export interface WorkspaceAccess {
+  workspace: {
+    id: string;
+    name: string;
+    slug: string;
+    createdBy: string | null;
+    createdAt: string;
+  };
+  membership: WorkspaceMembership;
+}
+
+/**
+ * Resolves a workspace by its public slug *and* the caller's membership in a single
+ * round-trip. Workspace-scoped URLs are keyed by slug, so this is the entry point
+ * every such route uses; joining rather than doing a slug lookup followed by a
+ * membership lookup means there is no window where a handler holds a workspace id it
+ * hasn't yet proven the caller may touch.
+ *
+ * Returns null when the slug doesn't exist *or* the caller isn't a member — the two
+ * are deliberately indistinguishable, so slugs can't be probed for existence.
+ */
+export async function getWorkspaceAccessBySlug(
+  slug: string,
+  userId: string,
+): Promise<WorkspaceAccess | null> {
+  const { rows } = await pool.query<{
+    id: string;
+    name: string;
+    slug: string;
+    created_by: string | null;
+    created_at: Date;
+    role: string;
+  }>(
+    `select w.id, w.name, w.slug, w.created_by, w.created_at, m.role
+       from workspaces w
+       join workspace_members m
+         on m.workspace_id = w.id and m.user_id = $2
+      where w.slug = $1`,
+    [slug, userId],
+  );
+  const row = rows[0];
+  if (!row) return null;
+
+  return {
+    workspace: {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      createdBy: row.created_by,
+      createdAt: row.created_at.toISOString(),
+    },
+    membership: {
+      workspaceId: row.id,
+      userId,
+      role: normalizeRole(row.role),
+    },
+  };
+}
+
+/**
+ * Slug-keyed counterpart to requireRole: resolves access or throws. A non-member gets
+ * the same 404 as a nonexistent slug; a member who lacks the required role gets 403,
+ * because at that point their access to the workspace is not a secret.
+ */
+export async function requireWorkspaceAccess(
+  slug: string,
+  userId: string,
+  minimum: UserRole = 'requester',
+): Promise<WorkspaceAccess> {
+  const access = await getWorkspaceAccessBySlug(slug, userId);
+  if (!access) {
+    throw new NotFoundError('Workspace not found.');
+  }
+  if (!hasRoleAtLeast(access.membership.role, minimum)) {
+    throw new ForbiddenError('You do not have permission to do this.');
+  }
+  return access;
 }
