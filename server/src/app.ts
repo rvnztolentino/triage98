@@ -5,6 +5,7 @@ import { pinoHttp } from 'pino-http';
 import { clientOrigins } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
+import authRouter from './routes/auth.js';
 import healthRouter from './routes/health.js';
 
 /**
@@ -15,6 +16,9 @@ export function createApp(): Express {
   const app = express();
 
   app.disable('x-powered-by');
+  // Trust the immediate proxy so req.ip reflects the real client (used as the
+  // rate-limit bucket key) when deployed behind one. Loopback-only in practice.
+  app.set('trust proxy', 1);
   app.use(helmet());
   app.use(cors({ origin: clientOrigins, credentials: true }));
   app.use(express.json({ limit: '1mb' }));
@@ -24,6 +28,7 @@ export function createApp(): Express {
     res.json({ name: 'triage98', status: 'ok' });
   });
   app.use('/health', healthRouter);
+  app.use('/auth', authRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

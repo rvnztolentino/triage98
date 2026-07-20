@@ -22,6 +22,17 @@ const EnvSchema = z.object({
     .min(1)
     .default('postgres://triage98:triage98@localhost:5432/triage98'),
   REDIS_URL: z.string().min(1).default('redis://localhost:6379'),
+  // Secret used to sign JWT session tokens. The default is fine for local dev; any
+  // real deployment MUST override it (see .env.example). Enforced non-empty so a
+  // blank value can never silently produce forgeable tokens.
+  JWT_SECRET: z.string().min(1).default('dev-insecure-jwt-secret-change-me'),
+  // Session lifetime, as a value the `jose` library understands (e.g. '7d', '12h').
+  JWT_EXPIRES_IN: z.string().min(1).default('7d'),
+  // bcrypt cost factor. 10 is a sensible default for a laptop; higher is slower.
+  BCRYPT_ROUNDS: z.coerce.number().int().min(4).max(15).default(10),
+  // First user to register (or whose email matches this) becomes the seed owner.
+  // Blank disables the behavior. Mirrors the reference's SEED_ADMIN_EMAIL.
+  SEED_ADMIN_EMAIL: z.string().default(''),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
