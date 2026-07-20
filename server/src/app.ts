@@ -7,6 +7,7 @@ import { logger } from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import authRouter from './routes/auth.js';
 import healthRouter from './routes/health.js';
+import workspacesRouter from './routes/workspaces.js';
 
 /**
  * Builds the Express application. Kept separate from the server bootstrap so it can
@@ -29,6 +30,7 @@ export function createApp(): Express {
   });
   app.use('/health', healthRouter);
   app.use('/auth', authRouter);
+  app.use('/workspaces', workspacesRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
