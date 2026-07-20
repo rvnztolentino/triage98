@@ -39,3 +39,15 @@ export class NotFoundError extends AppError {
     super(404, 'not_found', message);
   }
 }
+
+export class ConflictError extends AppError {
+  constructor(message = 'Conflict', details?: unknown) {
+    super(409, 'conflict', message, details);
+  }
+}
+
+export class TooManyRequestsError extends AppError {
+  constructor(message = 'Too many requests', details?: unknown) {
+    super(429, 'too_many_requests', message, details);
+  }
+}
