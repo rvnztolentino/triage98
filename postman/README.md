@@ -21,6 +21,9 @@ be re-run as often as you like:
 2. **Workspaces** — that owner creates a workspace, manages its departments, and mints
    an invite. A second user registers (`memberToken`), joins with the code, gets
    promoted, and leaves. The owner then deletes the workspace.
+3. **Requests** — creates its own workspace, submits requests, walks the listing,
+   pagination, and detail endpoints, then deletes that workspace. Self-contained, so it
+   does not depend on the Workspaces folder having run.
 
 To run individual requests instead, run **Auth / Register** first — everything else
 inherits the token it stores.
@@ -32,7 +35,18 @@ npx newman run postman/triage98.postman_collection.json \
   -e postman/triage98.postman_environment.json
 ```
 
-Expected: **36 requests, 72 assertions, 0 failures.**
+Expected: **52 requests, 106 assertions, 0 failures.**
+
+### Testing attachments
+
+Submission is `multipart/form-data`, and newman has no file to send — so the
+`attachments` row in **Requests / Submit request** ships **disabled**. To test uploads,
+open that request in the Postman UI, enable the row, and pick a file (JPG, PNG, WebP,
+PDF, DOCX, TXT, CSV, or JSON; up to 5 files, 10 MB each). Duplicate the row for more
+than one file.
+
+Attachments are validated by their bytes, not their name: a file whose contents
+contradict its extension comes back as a 400.
 
 ## What's covered
 
@@ -72,6 +86,22 @@ Expected: **36 requests, 72 assertions, 0 failures.**
 | Workspaces / Demo workspace is read-only | 403 (404 if you haven't joined it) |
 | Workspaces / Delete workspace (wrong confirmation) | 400, names the required slug |
 | Workspaces / Delete workspace | 204 |
+| Requests / Create requests workspace | 201, the folder's own workspace |
+| Requests / Submit request | 201, `REQ-` id, `needs-review`, `queuedForTriage` |
+| Requests / Submit a second request | 201, id increments |
+| Requests / Submit (description too short) | 400, `details.description` |
+| Requests / Submit (no location) | 400, `details.location` |
+| Requests / Submit (no token) | 401 |
+| Requests / List requests | 200, newest first, with `requesterName` |
+| Requests / List requests (status filter) | 200, empty until feat/review |
+| Requests / List requests (page 1 of 1) | 200, one row + `nextCursor` |
+| Requests / List requests (page 2) | 200, the older row, `nextCursor: null` |
+| Requests / List requests (tampered cursor) | 400, names the cursor |
+| Requests / Get request | 200, detail + attachments, no storage path |
+| Requests / Get unknown request | 404 |
+| Requests / Get unknown attachment | 404 |
+| Requests / Submit to the demo workspace | 403 (404 if you haven't joined it) |
+| Requests / Delete requests workspace | 204, cleans up |
 
 ## Notes
 
@@ -79,7 +109,8 @@ Expected: **36 requests, 72 assertions, 0 failures.**
   acting as the second user override this to `{{memberToken}}`; anonymous ones override
   to **No Auth**.
 - Rate limits: register 5/hour/IP, login 10/min/IP, workspace create 5/hour/user, invite
-  redemption 10 per 10 min/user, admin mutations 60/min per user per workspace. A 429
+  redemption 10 per 10 min/user, admin mutations 60/min per user per workspace, request
+  submission 20/hour per user per workspace and 200/day per workspace. A 429
   with `Retry-After` is expected behavior, not a bug. Clear the counters with
   `docker exec triage98-redis redis-cli flushall`.
 - To try the read-only demo workspace, redeem the seeded code `DEMO-CLINIC-2026` via

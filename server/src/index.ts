@@ -4,6 +4,12 @@ import { env } from './config/env.js';
 import { pool } from './db/pool.js';
 import { logger } from './lib/logger.js';
 import { redis } from './redis/client.js';
+import { ensureUploadDirs } from './requests/attachments.js';
+
+// Attachments land on local disk, so the directories have to exist before the first
+// upload arrives. Doing it here fails loudly at startup rather than on someone's
+// first submission.
+await ensureUploadDirs();
 
 const app = createApp();
 

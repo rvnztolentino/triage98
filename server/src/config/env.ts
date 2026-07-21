@@ -33,6 +33,18 @@ const EnvSchema = z.object({
   // First user to register (or whose email matches this) becomes the seed owner.
   // Blank disables the behavior. Mirrors the reference's SEED_ADMIN_EMAIL.
   SEED_ADMIN_EMAIL: z.string().default(''),
+  // Where request attachments are written. Relative paths resolve against the
+  // server workspace directory, so the default keeps uploads inside server/uploads.
+  UPLOAD_DIR: z.string().min(1).default('uploads'),
+  // Per-file ceiling. The schema's size_bytes check constraint caps rows at 10 MB,
+  // so raising this past 10485760 would trade a clean 400 for a constraint error.
+  MAX_UPLOAD_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .max(10_485_760)
+    .default(10_485_760),
+  MAX_UPLOAD_FILES: z.coerce.number().int().min(1).max(20).default(5),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
@@ -51,3 +63,9 @@ export type Env = z.infer<typeof EnvSchema>;
 export const clientOrigins = env.CLIENT_ORIGIN.split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+/**
+ * Absolute path to the upload root. Resolved once at startup so no request handler
+ * ever joins a caller-supplied path against a relative base.
+ */
+export const uploadRoot = path.resolve(process.cwd(), env.UPLOAD_DIR);

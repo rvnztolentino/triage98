@@ -103,6 +103,14 @@ export function userKey(req: Request): string {
  * Falls back to the user alone before requireWorkspace has resolved the slug.
  */
 export function userWorkspaceKey(req: Request): string {
-  const workspace = req.workspace?.id ?? routeParam(req, 'slug') ?? 'none';
-  return `${userKey(req)}:${workspace}`;
+  return `${userKey(req)}:${workspaceKey(req)}`;
+}
+
+/**
+ * Bucket key for the whole workspace, regardless of who is calling — the shape a
+ * shared-resource ceiling needs (request submissions filling a review queue or a
+ * disk), where the limit belongs to the workspace rather than to any one member.
+ */
+export function workspaceKey(req: Request): string {
+  return req.workspace?.id ?? routeParam(req, 'slug') ?? 'none';
 }
