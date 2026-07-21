@@ -7,6 +7,7 @@ import { logger } from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import authRouter from './routes/auth.js';
 import healthRouter from './routes/health.js';
+import requestsRouter from './routes/requests.js';
 import workspacesRouter from './routes/workspaces.js';
 
 /**
@@ -30,6 +31,9 @@ export function createApp(): Express {
   });
   app.use('/health', healthRouter);
   app.use('/auth', authRouter);
+  // Mounted ahead of the workspaces router so /workspaces/:slug/requests resolves
+  // here rather than falling through to that router's own /:slug routes.
+  app.use('/workspaces/:slug/requests', requestsRouter);
   app.use('/workspaces', workspacesRouter);
 
   app.use(notFoundHandler);
